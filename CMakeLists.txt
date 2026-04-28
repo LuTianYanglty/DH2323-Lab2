@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(DH2323Lab1)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-O2 -Wall")
+set(CMAKE_CXX_FLAGS "-O0 -g -Wall")
 
 IF(APPLE)
   SET(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "Build architectures for Mac OS X" FORCE)
