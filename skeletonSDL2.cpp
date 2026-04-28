@@ -19,6 +19,12 @@ SDL2Aux *sdlAux;
 int t;
 vector<Triangle> triangles;
 
+// Task 4.1
+// focalLength（焦距）：值越大视野越窄，设成屏幕高度500，视野约53°，刚好看到整个Cornell Box
+float focalLength = SCREEN_HEIGHT;
+// cameraPos（相机位置）：Cornell Box在z∈[-1,1]，把相机放在z=-2正对着盒子
+vec3  cameraPos(0.f, 0.f, -2.f);
+
 // ----------------------------------------------------------------------------
 // DATA STRUCTURES
 
@@ -110,15 +116,24 @@ void Update(void)
 
 void Draw()
 {
-	// Draw the scene:
 	sdlAux->clearPixels();
 
-	for( int y=0; y<SCREEN_HEIGHT; ++y )
+	// Task 4.2：遍历每个像素，向场景发射光线
+	for (int y = 0; y < SCREEN_HEIGHT; ++y)
 	{
-		for( int x=0; x<SCREEN_WIDTH; ++x )
+		for (int x = 0; x < SCREEN_WIDTH; ++x)
 		{
-			vec3 color( 1, 0.5, 0.5 );
-			sdlAux->putPixel(x, y, color);
+			// 方向向量 d = (x - W/2, y - H/2, focalLength)
+			// x-W/2 和 y-H/2 是像素相对屏幕中心的偏移，focalLength是前向深度
+			vec3 dir(x - SCREEN_WIDTH  / 2.f,
+			         y - SCREEN_HEIGHT / 2.f,
+			         focalLength);
+
+			Intersection isect;
+			if (ClosestIntersection(cameraPos, dir, triangles, isect))
+				sdlAux->putPixel(x, y, triangles[isect.triangleIndex].color); // 命中：画三角形颜色
+			else
+				sdlAux->putPixel(x, y, vec3(0.f, 0.f, 0.f)); // 未命中：画黑色
 		}
 	}
 	sdlAux->render();
