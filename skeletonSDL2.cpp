@@ -19,18 +19,6 @@ SDL2Aux *sdlAux;
 int t;
 vector<Triangle> triangles;
 
-// Task 4.1 ——————————————————————————————————————————
-// focalLength（焦距）决定摄像机的视野大小：
-//   值越大，视野越窄（像长焦镜头）；值越小，视野越宽（像广角镜头）。
-//   这里设为屏幕高度（500），视野约 53°，刚好能完整看到 Cornell Box。
-float focalLength = SCREEN_HEIGHT;
-
-// cameraPos 是摄像机在三维世界中的位置。
-//   Cornell Box 的范围是 x/y/z ∈ [-1, 1]，
-//   把摄像机放在 z = -2，正对着盒子的正面往 +z 方向看。
-vec3 cameraPos(0.f, 0.f, -2.f);
-// ———————————————————————————————————————————————————
-
 // ----------------------------------------------------------------------------
 // DATA STRUCTURES
 
@@ -88,7 +76,7 @@ bool ClosestIntersection(vec3 start, vec3 dir,
                 closestIntersection.position      = start + t_val * dir;  // 3D world position Task 3.2
                 closestIntersection.distance      = t_val;// scalar distance 3.2
                 closestIntersection.triangleIndex = i;// which triangle 
-				//如果光线撞到了东西，我需要用一个小本子把这次碰撞的【位置】、【距离】和【三角形编号】记录下来。
+				//
                 found = true;
             }
         }
@@ -122,32 +110,16 @@ void Update(void)
 
 void Draw()
 {
+	// Draw the scene:
 	sdlAux->clearPixels();
 
-	// Task 4.2：对每一个像素发射一条光线，找最近的交点并上色 ——————————
-	for (int y = 0; y < SCREEN_HEIGHT; ++y)
+	for( int y=0; y<SCREEN_HEIGHT; ++y )
 	{
-		for (int x = 0; x < SCREEN_WIDTH; ++x)
+		for( int x=0; x<SCREEN_WIDTH; ++x )
 		{
-			// 计算这个像素对应的光线方向：
-			//   x - W/2  →  像素相对于屏幕中心的水平偏移
-			//   y - H/2  →  像素相对于屏幕中心的垂直偏移
-			//   focalLength →  沿 z 轴向前推进的"深度"，决定视野角
-			// 三个分量合起来就是一根从摄像机出发、穿过该像素的方向向量。
-			vec3 dir(x - SCREEN_WIDTH  / 2.f,
-			         y - SCREEN_HEIGHT / 2.f,
-			         focalLength);
-
-			Intersection isect;
-			// 向场景中所有三角形发射这条光线，找最近交点
-			if (ClosestIntersection(cameraPos, dir, triangles, isect))
-				// 命中：用该三角形的颜色填充像素
-				sdlAux->putPixel(x, y, triangles[isect.triangleIndex].color);
-			else
-				// 未命中任何物体：画黑色（背景）
-				sdlAux->putPixel(x, y, vec3(0.f, 0.f, 0.f));
+			vec3 color( 1, 0.5, 0.5 );
+			sdlAux->putPixel(x, y, color);
 		}
 	}
-	// ———————————————————————————————————————————————————————————————
 	sdlAux->render();
 }
