@@ -112,7 +112,7 @@ void Update(void)
 	int t2 = SDL_GetTicks();
 	float dt = float(t2 - t);
 	t = t2;
-	cout << “Render time: “ << dt << " ms." << endl;
+	cout << "Render time: " << dt << " ms." << endl;
 
 	// Task 5.1：用 SDL_GetKeyboardState 读取当前按键状态
 	// 每帧按住方向键就持续移动相机，移动速度 = 0.001 * dt（与帧率无关）
