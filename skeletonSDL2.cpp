@@ -13,8 +13,9 @@ using glm::mat3;
 // ----------------------------------------------------------------------------
 // GLOBAL VARIABLES
 
-const int SCREEN_WIDTH = 500;
-const int SCREEN_HEIGHT = 500;
+// Task 5.2：降低分辨率到100×100，让每帧光线追踪的计算量缩小25倍，达到实时响应
+const int SCREEN_WIDTH = 100;
+const int SCREEN_HEIGHT = 100;
 SDL2Aux *sdlAux;
 int t;
 vector<Triangle> triangles;
@@ -23,7 +24,7 @@ vector<Triangle> triangles;
 // focalLength（焦距）：值越大视野越窄，设成屏幕高度500，视野约53°，刚好看到整个Cornell Box
 float focalLength = SCREEN_HEIGHT;
 // cameraPos（相机位置）：Cornell Box在z∈[-1,1]，把相机放在z=-2正对着盒子
-vec3  cameraPos(0.f, 0.f, -2.f);
+vec3  cameraPos(0.f, 0.f, -3.f);
 
 // ----------------------------------------------------------------------------
 // DATA STRUCTURES
@@ -107,11 +108,21 @@ int main( int argc, char* argv[] )
 
 void Update(void)
 {
-	// Compute frame time:ß  计算“画一幅画需要多长时间”
+	// 计算帧时间（单位毫秒），用来让移动速度与帧率无关
 	int t2 = SDL_GetTicks();
-	float dt = float(t2-t);
+	float dt = float(t2 - t);
 	t = t2;
-	cout << "Render time: " << dt << " ms." << endl;
+	cout << “Render time: “ << dt << “ ms.” << endl;
+
+	// Task 5.1：用 SDL_GetKeyboardState 读取当前按键状态
+	// 每帧按住方向键就持续移动相机，移动速度 = 0.001 * dt（与帧率无关）
+	const Uint8* keys = SDL_GetKeyboardState(NULL);
+	float speed = 0.001f * dt; // 每毫秒移动0.001单位
+
+	if (keys[SDL_SCANCODE_UP])    cameraPos.z += speed; // 前进（靠近盒子）
+	if (keys[SDL_SCANCODE_DOWN])  cameraPos.z -= speed; // 后退（远离盒子）
+	if (keys[SDL_SCANCODE_LEFT])  cameraPos.x -= speed; // 向左平移
+	if (keys[SDL_SCANCODE_RIGHT]) cameraPos.x += speed; // 向右平移
 }
 
 void Draw()
