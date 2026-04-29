@@ -26,6 +26,16 @@ float focalLength = SCREEN_HEIGHT;
 // cameraPos（相机位置）：Cornell Box在z∈[-1,1]，把相机放在z=-2正对着盒子
 vec3  cameraPos(0.f, 0.f, -3.f);
 
+// Task 5.3
+// yaw：相机绕Y轴的偏航角（弧度），初始为0表示正对+z方向
+float yaw = 0.f;
+// R：由yaw构造的旋转矩阵，用来把光线方向从相机空间转到世界空间
+// 绕Y轴旋转矩阵：
+//   [ cos(yaw)  0  sin(yaw) ]
+//   [    0      1     0     ]
+//   [-sin(yaw)  0  cos(yaw) ]
+mat3  R;
+
 // ----------------------------------------------------------------------------
 // DATA STRUCTURES
 
@@ -114,15 +124,24 @@ void Update(void)
 	t = t2;
 	cout << "Render time: " << dt << " ms." << endl;
 
-	// Task 5.1：用 SDL_GetKeyboardState 读取当前按键状态
-	// 每帧按住方向键就持续移动相机，移动速度 = 0.001 * dt（与帧率无关）
 	const Uint8* keys = SDL_GetKeyboardState(NULL);
-	float speed = 0.001f * dt; // 每毫秒移动0.001单位
+	float moveSpeed = 0.001f * dt; // 平移速度：每毫秒0.001单位
+	float rotSpeed  = 0.001f * dt; // 旋转速度：每毫秒0.001弧度
 
-	if (keys[SDL_SCANCODE_UP])    cameraPos.z += speed; // 前进（靠近盒子）
-	if (keys[SDL_SCANCODE_DOWN])  cameraPos.z -= speed; // 后退（远离盒子）
-	if (keys[SDL_SCANCODE_LEFT])  cameraPos.x -= speed; // 向左平移
-	if (keys[SDL_SCANCODE_RIGHT]) cameraPos.x += speed; // 向右平移
+	if (keys[SDL_SCANCODE_UP])   cameraPos.z += moveSpeed; // 前进
+	if (keys[SDL_SCANCODE_DOWN]) cameraPos.z -= moveSpeed; // 后退
+
+	// Task 5.3：左右键不再平移，改为修改yaw角
+	if (keys[SDL_SCANCODE_LEFT])  yaw -= rotSpeed; // 相机向左转
+	if (keys[SDL_SCANCODE_RIGHT]) yaw += rotSpeed; // 相机向右转
+
+	// 每帧根据最新的yaw重新构造绕Y轴的旋转矩阵R
+	// glm::mat3的列向量构造：mat3(col0, col1, col2)
+	R = mat3(
+		 cos(yaw), 0.f, -sin(yaw),  // 第一列（X轴基向量）
+		 0.f,      1.f,  0.f,       // 第二列（Y轴基向量，旋转不影响Y）
+		 sin(yaw), 0.f,  cos(yaw)   // 第三列（Z轴基向量）
+	);
 }
 
 void Draw()
@@ -136,9 +155,11 @@ void Draw()
 		{
 			// 方向向量 d = (x - W/2, y - H/2, focalLength)
 			// x-W/2 和 y-H/2 是像素相对屏幕中心的偏移，focalLength是前向深度
-			vec3 dir(x - SCREEN_WIDTH  / 2.f,
-			         y - SCREEN_HEIGHT / 2.f,
-			         focalLength);
+			// 先构造相机空间的方向向量，再乘以R转到世界空间
+			// 这样相机转动时，光线方向也跟着转
+			vec3 dir = R * vec3(x - SCREEN_WIDTH  / 2.f,
+			                    y - SCREEN_HEIGHT / 2.f,
+			                    focalLength);
 
 			Intersection isect;
 			if (ClosestIntersection(cameraPos, dir, triangles, isect))
