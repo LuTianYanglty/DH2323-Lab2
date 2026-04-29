@@ -71,16 +71,28 @@ vec3 DirectLight(const Intersection& i)
     const Triangle& tri = triangles[i.triangleIndex];
 
     // 从交点指向光源的向量
-    vec3 toLight = lightPos - i.position;
-    float r      = glm::length(toLight);   // 交点到光源的距离
-    vec3  r_hat  = toLight / r;            // 单位方向向量
-    vec3  n_hat  = tri.normal;             // 表面单位法向量（已在TestModel中归一化）
+    vec3  toLight = lightPos - i.position;
+    float r       = glm::length(toLight); // 交点到光源的距离
+    vec3  r_hat   = toLight / r;          // 单位方向向量
+    vec3  n_hat   = tri.normal;           // 表面单位法向量
+
+    // Task 6.5：阴影检测
+    // 从交点沿r_hat方向投一条"阴影光线"，看它在抵达光源前是否撞到其他三角形
+    // 起点沿法向量微微偏移，避免浮点误差导致与自身三角形相交（自遮挡）
+    Intersection shadow;
+    vec3 shadowOrigin = i.position + n_hat * 1e-4f;
+    if (ClosestIntersection(shadowOrigin, r_hat, triangles, shadow))
+    {
+        // shadow.distance 是阴影光线沿 r_hat 走的参数距离
+        // 因为 r_hat 是单位向量，所以 shadow.distance == 实际距离
+        // 如果遮挡物比光源更近，该点在阴影中，不加直接光
+        if (shadow.distance < r)
+            return vec3(0.f, 0.f, 0.f);
+    }
 
     // 公式(24)：D = P * max(r_hat · n_hat, 0) / (4π r²)
-    // max保证背面不受光（点积为负时夹到0）
     float cosAngle = glm::dot(r_hat, n_hat);
-    vec3 D = lightColor * std::max(cosAngle, 0.f) / (4.f * 3.14159265f * r * r);
-    return D;
+    return lightColor * std::max(cosAngle, 0.f) / (4.f * 3.14159265f * r * r);
 }
 
 // ----------------------------------------------------------------------------
