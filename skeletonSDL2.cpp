@@ -36,6 +36,12 @@ float yaw = 0.f;
 //   [-sin(yaw)  0  cos(yaw) ]
 mat3  R;
 
+// Task 6.1
+// lightPos：光源在世界空间中的位置
+// lightColor：光源对每个颜色分量的功率P（单位W），14倍白光
+vec3 lightPos(0.f, -0.5f, -0.7f);
+vec3 lightColor = 14.f * vec3(1, 1, 1);
+
 // ----------------------------------------------------------------------------
 // DATA STRUCTURES
 
@@ -51,10 +57,31 @@ struct Intersection
 // FUNCTIONS
 
 void Update(void);
+vec3 DirectLight(const Intersection& i);
 void Draw(void);
 bool ClosestIntersection(vec3 start, vec3 dir,
                          const vector<Triangle>& triangles,
                          Intersection& closestIntersection);
+
+// ----------------------------------------------------------------------------
+// Task 6.2：直接光照函数，实现公式 D = P * max(r_hat · n_hat, 0) / (4π r²)
+
+vec3 DirectLight(const Intersection& i)
+{
+    const Triangle& tri = triangles[i.triangleIndex];
+
+    // 从交点指向光源的向量
+    vec3 toLight = lightPos - i.position;
+    float r      = glm::length(toLight);   // 交点到光源的距离
+    vec3  r_hat  = toLight / r;            // 单位方向向量
+    vec3  n_hat  = tri.normal;             // 表面单位法向量（已在TestModel中归一化）
+
+    // 公式(24)：D = P * max(r_hat · n_hat, 0) / (4π r²)
+    // max保证背面不受光（点积为负时夹到0）
+    float cosAngle = glm::dot(r_hat, n_hat);
+    vec3 D = lightColor * std::max(cosAngle, 0.f) / (4.f * 3.14159265f * r * r);
+    return D;
+}
 
 // ----------------------------------------------------------------------------
 // RAY–TRIANGLE INTERSECTION (Möller–Trumbore)
@@ -131,9 +158,18 @@ void Update(void)
 	if (keys[SDL_SCANCODE_UP])   cameraPos.z += moveSpeed; // 前进
 	if (keys[SDL_SCANCODE_DOWN]) cameraPos.z -= moveSpeed; // 后退
 
-	// Task 5.3：左右键不再平移，改为修改yaw角
-	if (keys[SDL_SCANCODE_LEFT])  yaw -= rotSpeed; // 相机向左转
-	if (keys[SDL_SCANCODE_RIGHT]) yaw += rotSpeed; // 相机向右转
+	// Task 5.3：左右键旋转相机
+	if (keys[SDL_SCANCODE_LEFT])  yaw -= rotSpeed;
+	if (keys[SDL_SCANCODE_RIGHT]) yaw += rotSpeed;
+
+	// Task 6.3：WASD+QE 移动光源
+	// W/S：光源前后（z轴），A/D：左右（x轴），Q/E：上下（y轴）
+	if (keys[SDL_SCANCODE_W]) lightPos.z += moveSpeed;
+	if (keys[SDL_SCANCODE_S]) lightPos.z -= moveSpeed;
+	if (keys[SDL_SCANCODE_A]) lightPos.x -= moveSpeed;
+	if (keys[SDL_SCANCODE_D]) lightPos.x += moveSpeed;
+	if (keys[SDL_SCANCODE_Q]) lightPos.y -= moveSpeed; // Q：光源上移（y轴向上为负）
+	if (keys[SDL_SCANCODE_E]) lightPos.y += moveSpeed; // E：光源下移
 
 	// 每帧根据最新的yaw重新构造绕Y轴的旋转矩阵R
 	// glm::mat3的列向量构造：mat3(col0, col1, col2)
@@ -163,9 +199,14 @@ void Draw()
 
 			Intersection isect;
 			if (ClosestIntersection(cameraPos, dir, triangles, isect))
-				sdlAux->putPixel(x, y, triangles[isect.triangleIndex].color); // 命中：画三角形颜色
+			{
+				// Task 6.3：用直接光照 × 表面颜色得到最终像素颜色
+				// DirectLight返回到达该点的光功率密度D，乘以表面固有颜色
+				vec3 color = triangles[isect.triangleIndex].color * DirectLight(isect);
+				sdlAux->putPixel(x, y, color);
+			}
 			else
-				sdlAux->putPixel(x, y, vec3(0.f, 0.f, 0.f)); // 未命中：画黑色
+				sdlAux->putPixel(x, y, vec3(0.f, 0.f, 0.f)); // 未命中：黑色
 		}
 	}
 	sdlAux->render();
