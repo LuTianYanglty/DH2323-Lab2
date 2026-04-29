@@ -207,9 +207,11 @@ void Draw()
 			Intersection isect;
 			if (ClosestIntersection(cameraPos, dir, triangles, isect))
 			{
-				// Task 6.3：直接用DirectLight的结果作为像素颜色
-				// 此阶段只显示光照强度，不乘表面颜色（反射模型在Task 7加入）
-				vec3 color = DirectLight(isect);
+				// Task 6.4：漫反射模型 R = ρ * D
+				// ρ 是三角形的固有颜色，D 是到达该点的直接光照强度
+				// glm vec3 的 * 是逐分量乘法，对应公式(25)的元素级乘法
+				vec3 rho   = triangles[isect.triangleIndex].color;
+				vec3 color = rho * DirectLight(isect);
 				sdlAux->putPixel(x, y, color);
 			}
 			else
