@@ -42,6 +42,9 @@ mat3  R;
 vec3 lightPos(0.f, -0.5f, -0.7f);
 vec3 lightColor = 14.f * vec3(1, 1, 1);
 
+// Task 6.6：用常数项近似间接光照（环境光），防止阴影区域死黑
+vec3 indirectLight = 0.5f * vec3(1, 1, 1);
+
 // ----------------------------------------------------------------------------
 // DATA STRUCTURES
 
@@ -207,11 +210,11 @@ void Draw()
 			Intersection isect;
 			if (ClosestIntersection(cameraPos, dir, triangles, isect))
 			{
-				// Task 6.4：漫反射模型 R = ρ * D
-				// ρ 是三角形的固有颜色，D 是到达该点的直接光照强度
-				// glm vec3 的 * 是逐分量乘法，对应公式(25)的元素级乘法
+				// Task 6.6：R = ρ * (D + N)
+				// D = DirectLight（直接光照），N = indirectLight（常数间接光近似）
+				// 两者相加得到总入射光T，再乘表面反射率ρ得到最终颜色
 				vec3 rho   = triangles[isect.triangleIndex].color;
-				vec3 color = rho * DirectLight(isect);
+				vec3 color = rho * (DirectLight(isect) + indirectLight);
 				sdlAux->putPixel(x, y, color);
 			}
 			else
