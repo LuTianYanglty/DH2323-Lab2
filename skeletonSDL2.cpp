@@ -200,9 +200,9 @@ void Draw()
 			Intersection isect;
 			if (ClosestIntersection(cameraPos, dir, triangles, isect))
 			{
-				// Task 6.3：用直接光照 × 表面颜色得到最终像素颜色
-				// DirectLight返回到达该点的光功率密度D，乘以表面固有颜色
-				vec3 color = triangles[isect.triangleIndex].color * DirectLight(isect);
+				// Task 6.3：直接用DirectLight的结果作为像素颜色
+				// 此阶段只显示光照强度，不乘表面颜色（反射模型在Task 7加入）
+				vec3 color = DirectLight(isect);
 				sdlAux->putPixel(x, y, color);
 			}
 			else
