@@ -77,15 +77,10 @@ vec3 DirectLight(const Intersection& i)
     vec3  n_hat   = tri.normal;           // 表面单位法向量
 
     // Task 6.5：阴影检测
-    // 从交点沿r_hat方向投一条"阴影光线"，看它在抵达光源前是否撞到其他三角形
-    // 起点沿法向量微微偏移，避免浮点误差导致与自身三角形相交（自遮挡）
     Intersection shadow;
     vec3 shadowOrigin = i.position + n_hat * 1e-4f;
     if (ClosestIntersection(shadowOrigin, r_hat, triangles, shadow))
     {
-        // shadow.distance 是阴影光线沿 r_hat 走的参数距离
-        // 因为 r_hat 是单位向量，所以 shadow.distance == 实际距离
-        // 如果遮挡物比光源更近，该点在阴影中，不加直接光
         if (shadow.distance < r)
             return vec3(0.f, 0.f, 0.f);
     }
